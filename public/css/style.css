@@ -22,3 +22,7 @@ ul.role-wrapper {
 ul.role-wrapper li {
     flex: 0 0 23%;
 }
+
+img.logo-text{
+    display: none;
+}
