@@ -54,7 +54,7 @@
             <div class="col-xl-6 col-lg-6">
                 <div class="pages-left h-100">
                     <div class="login-content">
-                        <img src="{{ asset('images/logo.png') }}" class="mb-3">
+                        <img src="{{ asset('images/logo.png') }}" class="mb-3" width="180">
                         <p>Your true value is determined by how much more you give in value than you take in payment. ...</p>
                     </div>
                     <div class="login-media text-center">
