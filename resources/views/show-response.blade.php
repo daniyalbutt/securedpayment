@@ -180,6 +180,40 @@
                     </ul>
                     @endif
                     @endif
+
+                    @if($data->merchant == 5)
+                    @php
+                    $return_data = json_decode($data->return_response, true);
+                    $payment_data = json_decode($data->payment_data, true);
+                    function displayData($data, $level = 0) {
+                        $output = '';
+                        foreach($data as $key => $value) {
+                            $indent = str_repeat('&nbsp;', $level * 4);
+                            $output .= '<div class="mb-2">';
+                            $output .= $indent . '<strong class="text-capitalize">' . str_replace('_', ' ', $key) . ':</strong> ';
+                            
+                            if(is_array($value)) {
+                                $output .= '<div class="ms-4">' . displayData($value, $level + 1) . '</div>';
+                            } else {
+                                $output .= '<span>' . ($value ?? 'N/A') . '</span>';
+                            }
+                            
+                            $output .= '</div>';
+                        }
+                        return $output;
+                    }
+                    
+                    $paymentArray = json_decode(json_encode($return_data), true);
+                    $paymentDataArray = json_decode(json_encode($payment_data), true);
+                    @endphp
+                    @if($return_data != null)
+                    @if($data->status == 2)
+                        {!! displayData($paymentArray) !!}
+                        <hr>
+                        {!! displayData($paymentDataArray) !!}
+                    @endif
+                    @endif
+                    @endif
                 </div>
             </div>
         </div>

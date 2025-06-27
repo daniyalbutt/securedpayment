@@ -69,6 +69,8 @@ class FrontController extends Controller
             return view('payment', compact('data'));
         }else if($data->merchant == 4){
             return view('authorize', compact('data'));
+        }else if($data->merchant == 5){
+            return view('paypal', compact('data'));
         }else{
             return view('square', compact('data'));
         }

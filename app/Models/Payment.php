@@ -76,6 +76,8 @@ class Payment extends Model
             return 'FETCH';
         }else if($this->merchant == 4){
             return 'AUTHORIZE';
+        }else if($this->merchant == 5){
+            return 'PAYPAL';
         }
     }
 

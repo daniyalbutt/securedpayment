@@ -23,6 +23,8 @@ ul.role-wrapper li {
     flex: 0 0 23%;
 }
 
-img.logo-text{
-    display: none;
+@media (max-width: 767.98px) {
+    img.logo-text{
+        display: none;
+    }
 }

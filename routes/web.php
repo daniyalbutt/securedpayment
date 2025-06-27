@@ -8,6 +8,7 @@ use App\Http\Controllers\FrontController;
 use App\Http\Controllers\BrandsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PayPalController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -32,6 +33,10 @@ Route::post('payment/authorize', [StripeController::class, 'paymentAuthorize'])-
 Route::get('success/{id}', [StripeController::class, 'successPayment'])->name('success.payment');
 Route::get('declined/{id}', [StripeController::class, 'declinedPayment'])->name('declined.payment');
 Route::get('export', [FrontController::class, 'export'])->name('export');
+
+Route::post('paypal/payment', [PayPalController::class, 'payment'])->name('paypal.payment');
+Route::get('paypal/payment/success', [PayPalController::class, 'paymentSuccess'])->name('paypal.payment.success');
+Route::get('paypal/payment/cancel', [PayPalController::class, 'paymentCancel'])->name('paypal.payment/cancel');
 
 // Route::get('stripe', [StripeController::class, 'stripe']);
 Route::post('stripe', [StripeController::class, 'stripePost'])->name('stripe.post');

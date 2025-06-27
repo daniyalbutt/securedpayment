@@ -75,6 +75,7 @@
 												<option value="2">STRIPE - One Step Marketing</option> -->
 												<!-- <option value="3">FETCH</option> -->
 												<option value="4">AUTHORIZE</option>
+												<option value="5">PAYPAL</option>
 											</select>
 										</div>
 									</div>
