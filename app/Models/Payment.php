@@ -51,7 +51,7 @@ class Payment extends Model
         $merchant = $this->merchants->merchant;
         if($merchant == 0){
             // Stripe
-            return 'testing';
+            return '';
             return strtoupper(json_decode($this->return_response)->charges->data[0]->payment_method_details->card->brand) . ' **** **** ****' . json_decode($this->return_response)->charges->data[0]->payment_method_details->card->last4;
         }else if($merchant == 4){
             // Authorize
@@ -64,7 +64,7 @@ class Payment extends Model
     public function getCardBrand(){
         $merchant = $this->merchants->merchant;
         if($merchant == 0){
-            return 'testing';
+            return '';
             return strtoupper(json_decode($this->return_response)->charges->data[0]->payment_method_details->card->brand);
         }else if($merchant == 4){
             return strtoupper(json_decode($this->authorize_response)->card_brand);
