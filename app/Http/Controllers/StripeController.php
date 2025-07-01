@@ -23,13 +23,9 @@ class StripeController extends Controller
         $data = Payment::find($request->input('id'));
         if ($data->status == 0) {
             try {
-                if($data->merchant == 0){
-                    $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
-                    \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-                }else{
-                    $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET_UK'));
-                    \Stripe\Stripe::setApiKey(env('STRIPE_SECRET_UK'));
-                }
+
+                $stripe = new \Stripe\StripeClient($data->merchants->private_key);
+                \Stripe\Stripe::setApiKey($data->merchants->private_key);
 
                 if($request->status == 'success'){
                     $payment_intent = $request->payment_intent;

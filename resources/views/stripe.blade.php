@@ -339,12 +339,11 @@
         })();
     </script>
     <script>
-        // let stripe = Stripe('{{ $data->merchant == 0 ? env('STRIPE_KEY') : env('STRIPE_KEY_UK') }}');
-        
+  
         var form = document.getElementById('card-form');
         
         // Initialize Stripe v3
-        const stripe = Stripe('{{ $data->merchant == 0 ? env("STRIPE_KEY") : env("STRIPE_KEY_UK") }}');
+        const stripe = Stripe('{{ $data->merchants->public_key }}');
 
         var elements = stripe.elements({
             fonts: [{

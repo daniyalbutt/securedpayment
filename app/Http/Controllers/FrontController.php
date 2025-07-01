@@ -39,28 +39,28 @@ class FrontController extends Controller
         $merchant_type = $data->merchants->merchant;
         if($merchant_type == 0){
             if($data->intent == null){
-                Stripe::setApiKey(env('STRIPE_SECRET'));
+                Stripe::setApiKey($data->merchants->private_key);
                 $intent = PaymentIntent::create([
                     'amount' => $data->price * 100, // $10.00
                     'currency' => 'usd',
                     'payment_method_types' => ['card'],
                 ]);
                 $data->intent = $intent->client_secret;
-                $data->stripe_key = env('STRIPE_KEY');
+                $data->stripe_key = $data->merchants->public_key;
                 $data->save();
                 $CLIENT_SECRET = $intent->client_secret;
             }else{
-                if($data->stripe_key == env('STRIPE_KEY')){
+                if($data->stripe_key == $data->merchants->public_key){
                     $CLIENT_SECRET = $data->intent;
                 }else{
-                    Stripe::setApiKey(env('STRIPE_SECRET'));
+                    Stripe::setApiKey($data->merchants->private_key);
                     $intent = PaymentIntent::create([
-                        'amount' => $data->price * 100, // $10.00
+                        'amount' => $data->price * 100,
                         'currency' => 'usd',
                         'payment_method_types' => ['card'],
                     ]);
                     $data->intent = $intent->client_secret;
-                    $data->stripe_key = env('STRIPE_KEY');
+                    $data->stripe_key = $data->merchants->public_key;
                     $data->save();
                     $CLIENT_SECRET = $intent->client_secret;
                 }
