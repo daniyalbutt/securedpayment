@@ -70,12 +70,15 @@
 										<div class="form-group mb-3">
 											<label class="form-label">Merchant</label>
 											<select name="merchant" class="form-control" id="merchant" required>
-												<option value="0">STRIPE</option>
+												<!-- <option value="0">STRIPE</option> -->
 												<!-- <option value="1">SQUARE</option>
 												<option value="2">STRIPE - One Step Marketing</option> -->
 												<!-- <option value="3">FETCH</option> -->
-												<option value="4">AUTHORIZE</option>
-												<option value="5">PAYPAL</option>
+												<!-- <option value="4">AUTHORIZE</option> -->
+												<!-- <option value="5">PAYPAL</option> -->
+												@foreach($merhant as $key => $value)
+												<option value="{{ $value->id }}">{{ $value->name }} - {{ $value->getMerchant() }}</option>
+												@endforeach
 											</select>
 										</div>
 									</div>

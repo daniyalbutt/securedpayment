@@ -282,8 +282,8 @@ class StripeController extends Controller
             $cvv = $request->input('cc_cvc');
             
             $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
-            $merchantAuthentication->setName(env('AUTHORIZENET_API_LOGIN_ID'));
-            $merchantAuthentication->setTransactionKey(env('AUTHORIZENET_TRANSACTION_KEY'));
+            $merchantAuthentication->setName($payments->merchants->public_key);
+            $merchantAuthentication->setTransactionKey($payments->merchants->private_key);
             
             $creditCard = new AnetAPI\CreditCardType();
             $creditCard->setCardNumber($cardNumber);
@@ -325,8 +325,11 @@ class StripeController extends Controller
             $request->setTransactionRequest($transactionRequestType);
     
             $controller = new AnetController\CreateTransactionController($request);
-            $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::PRODUCTION);
-            // $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+            if($payments->merchants->sandbox == 0){
+                $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::PRODUCTION);
+            }else{
+                $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+            }
             $update_payments = Payment::find($payments->id);
             $update_payments->payment_data = $input_request;
 

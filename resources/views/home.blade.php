@@ -75,7 +75,7 @@
                                                 </div>
                                             </div>
                                             <span>{{ $value->created_at->format('d M, Y') }} <br> {{ $value->created_at->format('g:i A') }}</span>
-                                            <span>${{ $value->price }} - {{ $value->getMerchant() }}<br>{{ Illuminate\Support\Str::limit($value->client->brand->name, 20) }}</span>
+                                            <span class="pr-0">${{ $value->price }} - {{ $value->merchants->name }} - {{ $value->merchants->getMerchant() }}<br>{{ Illuminate\Support\Str::limit($value->client->brand->name, 20) }}</span>
                                             <span class="badge badge-primary badge-sm" onclick="withJquery('{{ route('pay', [$value->unique_id]) }}')" style="cursor: pointer;">COPY LINK</span>
                                             <a class="btn {{ $value->get_badge_status() }} btn-sm light" href="javascript:void(0);">{{ $value->get_status() }}</a>
                                             <span class="accordion-header-indicator"></span>
