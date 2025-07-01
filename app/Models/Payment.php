@@ -64,6 +64,7 @@ class Payment extends Model
     public function getCardBrand(){
         $merchant = $this->merchants->merchant;
         if($merchant == 0){
+            return 'testing';
             return strtoupper(json_decode($this->return_response)->charges->data[0]->payment_method_details->card->brand);
         }else if($merchant == 4){
             return strtoupper(json_decode($this->authorize_response)->card_brand);
