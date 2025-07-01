@@ -66,7 +66,7 @@ class FrontController extends Controller
                 }
             }
             return view('stripe', compact('data', 'CLIENT_SECRET'));
-        }else if($data->merchant == 3){
+        }else if($merchant_type == 3){
             return view('payment', compact('data'));
         }else if($merchant_type == 4){
             return view('authorize', compact('data'));

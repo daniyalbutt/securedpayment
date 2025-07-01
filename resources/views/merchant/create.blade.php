@@ -58,13 +58,13 @@
 									</div>
 									<div class="col-md-12">
 										<div class="form-group mb-3">
-											<label class="form-label">Publishable key / Login ID</label>
+											<label class="form-label">Publishable key / Login ID / Client ID</label>
 											<input type="text" class="form-control" name="public_key" required value="{{ old('public_key') }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group mb-3">
-											<label class="form-label">Secret key / Transaction Key</label>
+											<label class="form-label">Secret key / Transaction Key / Client Secret</label>
 											<input type="text" class="form-control" name="private_key" required value="{{ old('private_key') }}">
 										</div>
 									</div>

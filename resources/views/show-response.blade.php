@@ -15,7 +15,7 @@
                     <h4 class="card-title">Response <strong>Details</strong></h4>
                 </div>
                 <div class="card-body">
-                    @if($data->merchant == 0)
+                    @if($data->merchants->merchant == 0)
                     @php
                     $getdata = json_decode($data->return_response, true);
                     $getcarddata = json_decode($data->payment_data, true);
@@ -77,7 +77,7 @@
                     {{ $data->return_response }}
                     @endif
                     @endif
-                    @elseif($data->merchant == 3)
+                    @elseif($data->merchants->merchant == 3)
                     @php
                     $getdata = json_decode($data->payment_data, true);
                     @endphp
@@ -98,7 +98,7 @@
                     @php
                     $getdata = json_decode($data->authorize_response, true);
                     @endphp
-                    @if($data->merchant == 4)
+                    @if($data->merchants->merchant == 4)
                     @if($getdata != null)
                     <ul class="return-response">
                         <li>{</li>
@@ -154,7 +154,7 @@
                     @endif
                     @endif
                     
-                    @if($data->merchant == 2)
+                    @if($data->merchants->merchant == 2)
                     @php
                     $getdata = json_decode($data->return_response, true);
                     @endphp
@@ -181,7 +181,7 @@
                     @endif
                     @endif
 
-                    @if($data->merchant == 5)
+                    @if($data->merchants->merchant == 5)
                     @php
                     $return_data = json_decode($data->return_response, true);
                     $payment_data = json_decode($data->payment_data, true);
