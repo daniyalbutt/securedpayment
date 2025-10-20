@@ -8,6 +8,7 @@ use Exception;
 use App\Models\Payment;
 use net\authorize\api\contract\v1 as AnetAPI;
 use net\authorize\api\controller as AnetController;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Http\Request;
 
@@ -20,58 +21,70 @@ class StripeController extends Controller
 
     public function stripePost(Request $request)
     {
+        $request->validate([
+            'user_name' => 'required|string|max:100',
+            'user_email' => 'required|email|max:100',
+            'country' => 'required|string|size:2',
+            'city' => 'required|string|max:100',
+            'zip' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
+            'set_state' => 'required|string|max:50',
+            'owner' => 'required|string|max:100',
+        ]);
         $data = Payment::find($request->input('id'));
-        if ($data->status == 0) {
-            try {
-
-                $stripe = new \Stripe\StripeClient($data->merchants->private_key);
-                \Stripe\Stripe::setApiKey($data->merchants->private_key);
-
-                if($request->status == 'success'){
-                    $payment_intent = $request->payment_intent;
-                    $paymentIntent = $stripe->paymentIntents->retrieve(
-                        $payment_intent,
-                    );
-                    $data->update([
-                        'status'=> 2,
-                        'return_response' => json_encode($paymentIntent),
-                        'payment_data' => $request->except(['amount','_token','id'])
-                    ]);
-                    return redirect()->route('success.payment', ['id' => $data->id]);
-                }else{
-                    $data->update([
-                        'square_response'=> $request->message,
-                        'status' => 1,
-                        'return_response' => $request->message,
-                        'payment_data' => $request->except(['amount','_token','id'])
-                    ]);
-                    return redirect()->route('declined.payment', ['id' => $data->id]);
-                }
-            } catch (\Stripe\Exception\CardException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (\Stripe\Exception\RateLimitException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (\Stripe\Exception\InvalidRequestException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (\Stripe\Exception\AuthenticationException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (\Stripe\Exception\ApiConnectionException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (\Stripe\Exception\ApiErrorException $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getError()->message,'payment_data'=>$request->except(['amount','_token','id'])]);
-                return redirect()->route('declined.payment', ['id' => $data->id]);
-            } catch (Exception $e) {
-                $data->update(['square_response'=> json_encode($e->getError()), 'status'=>1,'return_response'=> $e->getMessage(),'payment_data'=>$request->except(['amount','_token','id'])]);
+        Log::info('Stripe Payment Attempt Started', [
+            'payment_id' => $request->input('id'),
+            'request_all' => $request->except(['_token', 'card', 'card_number', 'cvc']),
+        ]);
+        if (!$data) {
+            return redirect()->back()->with('error', 'Invalid payment record.');
+        }
+        if ($data->status != 0) {
+            return redirect()->route('success.payment', ['id' => $data->id]);
+        }
+        try {
+            $stripe = new \Stripe\StripeClient($data->merchants->private_key);
+            \Stripe\Stripe::setApiKey($data->merchants->private_key);
+            $paymentIntentId = $request->input('payment_intent');
+            if (!$paymentIntentId) {
+                return redirect()->back()->with('error', 'Missing Payment Intent ID.');
+            }
+            $paymentIntent = $stripe->paymentIntents->retrieve($paymentIntentId);
+            $status = $paymentIntent->status;
+            if (in_array($status, ['succeeded', 'processing'])) {
+                $data->update([
+                    'status' => 2,
+                    'return_response' => json_encode($paymentIntent),
+                    'payment_data' => $request->except(['amount','_token','id'])
+                ]);
+                return redirect()->route('success.payment', ['id' => $data->id]);
+            } else {
+                $data->update([
+                    'status' => 1,
+                    'return_response' => json_encode($paymentIntent),
+                    'square_response' => $paymentIntent->last_payment_error->message ?? 'Payment failed',
+                    'payment_data' => $request->except(['amount','_token','id'])
+                ]);
                 return redirect()->route('declined.payment', ['id' => $data->id]);
             }
-            Session::flash('success', 'Payment Successful !');
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $data->update([
+                'status' => 1,
+                'return_response' => $e->getMessage(),
+                'square_response' => json_encode($e->getError()),
+                'payment_data' => $request->except(['amount','_token','id'])
+            ]);
+            return redirect()->route('declined.payment', ['id' => $data->id]);
+        } catch (\Exception $e) {
+            $data->update([
+                'status' => 1,
+                'return_response' => $e->getMessage(),
+                'payment_data' => $request->except(['amount','_token','id'])
+            ]);
+            return redirect()->route('declined.payment', ['id' => $data->id]);
         }
     }
+
     
     public function successPayment($id){
         $data = Payment::find($id);

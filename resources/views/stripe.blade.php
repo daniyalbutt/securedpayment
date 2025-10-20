@@ -63,12 +63,6 @@
             font-size: 14px;
             color: #0000008a;
         }
-        select#state{
-            margin: 0;
-            border-top-left-radius: 0px !important;
-            border-bottom-left-radius: 0px !important;
-            border-top-right-radius: 0 !important;
-        }
         .payment-left {
             display: flex;
             align-items: center;
@@ -163,6 +157,12 @@
         .input-group-append {
             margin: 0;
         }
+        #country{
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0px !important;
+            border-bottom-left-radius: 0 !important;
+            margin-bottom: 0;
+        }
     </style>
 </head>
 
@@ -172,6 +172,13 @@
     @endif
     @if (session('message'))
         <div class="success-alert alert alert-info">{{ session('message') }}</div>
+    @endif
+    @if ($errors->any())
+    <div class="alert alert-danger">
+    @foreach ($errors->all() as $error)
+        <p class="alert alert-danger">{{ $error }}</p>
+    @endforeach
+    </div>
     @endif
 
     @if (Session::has('stripe_error'))
@@ -239,7 +246,7 @@
                                 <label for="country">Country or region</label>
                                 <div class="row no-gap-row">
                                     <div class="col-md-6 pr-0">
-                                        <select name="country" id="country" class="form-control" required style="border-top-right-radius: 0 !important;border-bottom-right-radius: 0px !important;border-bottom-left-radius: 0 !important;margin-bottom: 0;">
+                                        <select name="country" id="country" class="form-control" required>
                                             <option>Select Country *</option>
                                         </select>
                                     </div>
@@ -383,18 +390,20 @@
         cardExpiry.mount('#expiry');
         cardNumber.mount('#cardnumber');
         
-        $('#stripe-submit').click(async function(e) {
+        $('#stripe-submit').click(async function (e) {
             e.preventDefault();
+            if (!validateFormFields()) {
+                return;
+            }
             $('#stripe-submit').hide();
             $('#loader').show();
-
             try {
-                // 1. Create PaymentMethod (replaces createToken)
-                const { paymentMethod, error } = await stripe.createPaymentMethod({
+                const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
                     type: 'card',
                     card: cardNumber,
                     billing_details: {
                         name: $('#cardname').val(),
+                        email: $('#user_email').val(),
                         address: {
                             line1: $('#address').val(),
                             city: $('#city').val(),
@@ -404,48 +413,49 @@
                         }
                     }
                 });
-
-                if (error){
-                    $('.error').removeClass('hide').find('.alert').text(error.message);
+                if (pmError) {
+                    $('.error').removeClass('hide').find('.alert').text(pmError.message);
+                    return;
                 }
-
-                // 2. Confirm PaymentIntent (handles 3D Secure)
                 const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(
-                    '{{ $CLIENT_SECRET }}', // From server
-                    {
-                        payment_method: paymentMethod.id,
-                    }
+                    '{{ $CLIENT_SECRET }}',
+                    { payment_method: paymentMethod.id }
                 );
-
-                if (confirmError){
-                    submit_form(confirmError.payment_intent.id, 'declined', confirmError.message);
-                    // $('.error').removeClass('hide').find('.alert').text(confirmError.message);
+                if (confirmError) {
+                    const intent = confirmError.payment_intent;
+                    if (intent && (intent.status === 'succeeded' || intent.status === 'processing')) {
+                        submit_form(intent, 'success');
+                    } else {
+                        submit_form(intent || {}, 'declined', confirmError.message);
+                    }
+                    return;
                 }
-
-                // 3. Handle 3D Secure if needed
                 if (paymentIntent.status === 'requires_action') {
-                    const { error: actionError } = await stripe.handleCardAction(
-                        paymentIntent.client_secret
-                    );
-                    if (actionError){
-                        $('.error').removeClass('hide').find('.alert').text(actionError.message);
+                    const { error: actionError, paymentIntent: handledIntent } = await stripe.handleCardAction(paymentIntent.client_secret);
+                    if (actionError) {
+                        submit_form(paymentIntent, 'declined', actionError.message);
+                        return;
                     }
-
-                    // Final confirmation
-                    const { paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(
-                        paymentIntent.client_secret
-                    );
-                    if (confirmedIntent.status === 'succeeded') {
-                        submit_form(paymentIntent, 'success');
+                    if (handledIntent.status === 'succeeded') {
+                        submit_form(handledIntent, 'success');
+                    } else {
+                        submit_form(handledIntent, 'declined', '3D Secure failed or cancelled.');
                     }
-                } else if (paymentIntent.status === 'succeeded') {
+                    return;
+                }
+                if (paymentIntent.status === 'succeeded') {
                     submit_form(paymentIntent, 'success');
+                } else if (paymentIntent.status === 'processing') {
+                    submit_form(paymentIntent, 'success', 'Payment is processing.');
+                } else {
+                    submit_form(paymentIntent, 'declined', 'Payment was not successful.');
                 }
             } catch (err) {
-                throw err;
-            } finally {
+                $('.error').removeClass('hide').find('.alert').text(err.message);
                 $('#stripe-submit').show();
                 $('#loader').hide();
+            } finally {
+                
             }
         });
 
@@ -504,6 +514,43 @@
                     form.submit();
                 }
             }
+        }
+
+        function validateFormFields() {
+            let errorCount = 0;
+            let requiredFields = [
+                { id: '#user_name', name: 'Name' },
+                { id: '#user_email', name: 'Email Address' },
+                { id: '#cardname', name: 'Name on Card' },
+                { id: '#country', name: 'Country' },
+                { id: '#city', name: 'City' },
+                { id: '#zip', name: 'ZIP' },
+                { id: '#address', name: 'Address' },
+                { id: '#state', name: 'State' }
+            ];
+            $('.form-control').removeClass('required');
+            for (let field of requiredFields) {
+                let value = $(field.id).val();
+                if (!value || value.trim() === '' || value === 'Select Country *' || value === 'select country') {
+                    $(field.id).addClass('required');
+                    errorCount++;
+                }
+            }
+            let emailVal = $('#user_email').val();
+            let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(emailVal)) {
+                $('#user_email').addClass('required');
+                errorCount++;
+            }
+            if (errorCount > 0) {
+                $('.error').removeClass('hide').find('.alert').text('Please fill all required fields correctly before proceeding.');
+                $('html, body').animate({
+                    scrollTop: $(".error").offset().top - 100
+                }, 500);
+                return false;
+            }
+            $('.error').addClass('hide');
+            return true;
         }
 
         function checkEmptyFileds() {

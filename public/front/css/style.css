@@ -549,6 +549,14 @@ input, textarea, select {
     padding-bottom: 10px;
     border: 1px solid #ced4da;
 }
+
+select#state{
+    margin: 0;
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+    border-top-right-radius: 0 !important;
+}
+
 @media (min-width: 576px){
     /* .modal-dialog {
         max-width: 600px;
@@ -702,5 +710,21 @@ label.checkout-box-wrapper input {
     
     .payment-right {
         padding: 20px 30px !important;
+    }
+
+    .col-md-6.pl-0{
+        padding-left: 15px !important;
+    }
+
+    div#cvv {
+        border-bottom-left-radius: 8px !important;
+    }
+
+    div#expiry {
+        border-bottom-left-radius: 0px !important;
+    }
+
+    select#country {
+        border-top-right-radius: 8px !important;
     }
 }
